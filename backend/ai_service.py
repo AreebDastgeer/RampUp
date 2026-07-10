@@ -13,6 +13,7 @@ load_dotenv()
 FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY")
 FIREWORKS_MODEL = os.getenv("FIREWORKS_MODEL")
 FIREWORKS_API_URL = "https://api.fireworks.ai/inference/v1/chat/completions"
+FIREWORKS_MAX_TOKENS = int(os.getenv("FIREWORKS_MAX_TOKENS", "800"))
 
 
 def _parse_json_response(content: str) -> dict | None:
@@ -45,7 +46,8 @@ def generate_ai_brief(
             {"role": "user", "content": f"Developer Role:\n{role}"},
             {"role": "user", "content": f"Mission:\n{mission}"},
         ],
-        "temperature": 0.2,
+        "reasoning_effort": "none",
+        "max_tokens": FIREWORKS_MAX_TOKENS,
     }
 
     try:
@@ -62,6 +64,20 @@ def generate_ai_brief(
             body = json.loads(response.read().decode("utf-8"))
 
         content = body["choices"][0]["message"]["content"]
+        print("\n========== FIREWORKS FINISH REASON ==========")
+        print(body["choices"][0]["finish_reason"])
+        print("===========================================\n")
         return _parse_json_response(content)
-    except (urllib.error.URLError, urllib.error.HTTPError, KeyError, IndexError, json.JSONDecodeError, TypeError):
+    except Exception as e:
+        print("\n========== FIREWORKS ERROR ==========")
+        print(type(e).__name__)
+        print(e)
+
+        if isinstance(e, urllib.error.HTTPError):
+            print(e.read().decode())
+
+        print("=====================================\n")
+
         return None
+    # except (urllib.error.URLError, urllib.error.HTTPError, KeyError, IndexError, json.JSONDecodeError, TypeError):
+    #     return None

@@ -28,6 +28,8 @@ Do not include markdown.
 
 Do not include code fences.
 
+Keep the total response under 700 words.
+
 Return exactly this schema:
 
 {
