@@ -29,6 +29,28 @@ def _parse_json_response(content: str) -> dict | None:
 
     return parsed if isinstance(parsed, dict) else None
 
+def build_user_prompt(repository_summary, role, mission):
+    return f"""
+You are preparing an onboarding brief for a developer.
+
+===== REPOSITORY SUMMARY =====
+
+{repository_summary}
+
+===== END REPOSITORY SUMMARY =====
+
+===== DEVELOPER ROLE =====
+
+--------------
+{role}
+
+===== MISSION =====
+
+-------
+{mission}
+
+Generate the onboarding brief using only the repository information provided.
+"""
 
 def generate_ai_brief(
     repository_summary: str,
@@ -42,9 +64,7 @@ def generate_ai_brief(
         "model": FIREWORKS_MODEL,
         "messages": [
             {"role": "system", "content": RAMPUP_SYSTEM_PROMPT},
-            {"role": "user", "content": f"Repository Summary:\n{repository_summary}"},
-            {"role": "user", "content": f"Developer Role:\n{role}"},
-            {"role": "user", "content": f"Mission:\n{mission}"},
+            {"role": "user", "content": build_user_prompt(repository_summary, role, mission)},
         ],
         "reasoning_effort": "none",
         "max_tokens": FIREWORKS_MAX_TOKENS,
