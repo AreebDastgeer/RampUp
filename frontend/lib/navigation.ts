@@ -7,6 +7,18 @@ export type AppRoute =
   | "/repository"
   | "/health";
 
+  export type DashboardSection =
+  | "overview"
+  | "mission-map"
+  | "reading-order"
+  | "execution-flow"
+  | "dependency-explorer"
+  | "api-explorer"
+  | "repository-health"
+  | "code-intelligence"
+  | "roadmap"
+  | "risks";
+  
 export type NavItem = {
   href: AppRoute;
   label: string;
