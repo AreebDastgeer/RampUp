@@ -1,7 +1,10 @@
 import type { AnalyzeRequest, AnalyzeResponse } from "@/lib/types/analysis";
 
+// const API_BASE_URL =
+//   process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+  process.env.NEXT_PUBLIC_API_URL || "https://rampup-yavt.onrender.com";
 
 /** Analysis can take several minutes (clone + static analysis + LLM). */
 const ANALYZE_TIMEOUT_MS = 5 * 60 * 1000;
