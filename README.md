@@ -217,32 +217,6 @@ cd RampUp
 
 ---
 
-## Run with Docker (Recommended)
-
-Create a `.env` file in the backend directory:
-
-```env
-FIREWORKS_API_KEY=YOUR_API_KEY
-FIREWORKS_MODEL=YOUR_MODEL
-FIREWORKS_MAX_TOKENS=1500
-```
-
-Then run:
-
-```bash
-
-docker compose up --build
-
-```
-
-Frontend:
-http://localhost:3000
-
-Backend:
-http://localhost:8000
-
-
-## Local Setup
 
 # Backend Setup
 
