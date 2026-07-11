@@ -14,21 +14,15 @@ GITHUB_URL_PATTERN = re.compile(
 
 app = FastAPI()
 
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000","https://ramp-up-five.vercel.app"],
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Hackathon demo: allow Vercel preview deployments
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000","https://ramp-up-five.vercel.app",
+    "https://ramp-g9gr08jm6-grad-ai.vercel.app","https://ramp-up-ai.vercel.app/"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 class AnalyzeRequest(BaseModel):
