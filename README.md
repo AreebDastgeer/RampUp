@@ -1,4 +1,4 @@
-# 🚀 RampUp — AI-Powered Developer Onboarding Assistant
+# ✨ RampUp — AI-Powered Developer Onboarding Assistant
 
 > **Understand any GitHub repository in minutes, not days.**
 
@@ -23,17 +23,16 @@ It then generates a personalized onboarding roadmap based on the developer's **r
 
 **Video Demo:** *https://youtu.be/ash1U4vRU3M*
 
-**Live Demo:** *(Add deployed application URL here)*
+**Live Demo:** *https://ramp-up-ai.vercel.app/*
 
 ---
 
 # 📸 Preview
 
-*(Add screenshots here)*
-
 ### Landing Page
 
 ![Landing](docs/images/Landing_Page.png)
+
 
 ### Repository Intelligence Dashboard
 
@@ -218,11 +217,39 @@ cd RampUp
 
 ---
 
+## Run with Docker (Recommended)
+
+Create a `.env` file in the backend directory:
+
+```env
+FIREWORKS_API_KEY=YOUR_API_KEY
+FIREWORKS_MODEL=YOUR_MODEL
+FIREWORKS_MAX_TOKENS=1500
+```
+
+Then run:
+
+```bash
+
+docker compose up --build
+
+```
+
+Frontend:
+http://localhost:3000
+
+Backend:
+http://localhost:8000
+
+
+## Local Setup
+
 # Backend Setup
 
 Create a virtual environment:
 
 ```bash
+cd backend
 python -m venv .venv
 ```
 
@@ -265,13 +292,6 @@ Backend runs on:
 http://localhost:8000
 ```
 
-Swagger API:
-
-```
-http://localhost:8000/docs
-```
-
----
 
 # Frontend Setup
 
