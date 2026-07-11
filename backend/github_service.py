@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 from git import Repo
 
+from cache.repository_cache import get_cached_analysis, set_cached_analysis
 from repo_intelligence import analyze_repository_intelligence
 
 DEV_MODE = True
@@ -476,7 +477,7 @@ def _extract_project_purpose(readme_text: str) -> str:
         break
 
     purpose = " ".join(purpose_lines)
-    return purpose[:220].strip()
+    return _truncate_text_at_boundary(purpose, 220)
 
 
 def _build_compact_structure(
@@ -560,6 +561,39 @@ def _clean_readme_text(text: str) -> str:
     return "\n".join(line for line in lines if line).strip()
 
 
+def _truncate_text_at_boundary(text: str, max_chars: int) -> str:
+    if len(text) <= max_chars:
+        return text
+
+    boundary_match = None
+    for match in re.finditer(r"(?:\n\n|[.!?][\"')\]]*\s+)", text):
+        if match.end() <= max_chars:
+            boundary_match = match
+        else:
+            break
+
+    if boundary_match is not None:
+        truncated = text[: boundary_match.end()].rstrip()
+    else:
+        whitespace_cut = text.rfind(" ", 0, max_chars)
+        paragraph_cut = text.rfind("\n\n", 0, max_chars)
+        cut = max(whitespace_cut, paragraph_cut)
+        truncated = text[:cut].rstrip() if cut > 0 else text[:max_chars].rstrip()
+
+    truncated = re.sub(r"[.!?]+[\"')\]]*$", "", truncated).rstrip()
+    return f"{truncated}..."
+
+
+def _build_readme_preview(text: str, max_chars: int) -> str:
+    cleaned = _clean_readme_text(text)
+    if not cleaned:
+        return ""
+
+    paragraphs = [paragraph.strip() for paragraph in cleaned.split("\n\n") if paragraph.strip()]
+    normalized = "\n\n".join(paragraphs)
+    return _truncate_text_at_boundary(normalized, max_chars)
+
+
 def _extract_metadata(repo_path: Path, github_url: str) -> dict:
     file_count, dir_count = _count_files_and_directories(repo_path)
 
@@ -569,7 +603,7 @@ def _extract_metadata(repo_path: Path, github_url: str) -> dict:
     readme_text = ""
     if has_readme:
         readme_text = readme_path.read_text(encoding="utf-8", errors="replace")
-        readme_preview = readme_text[:1000]
+        readme_preview = _build_readme_preview(readme_text, 1000)
 
     top_level_folders = _get_top_level_folders(repo_path)
 
@@ -699,7 +733,7 @@ def build_repository_summary(metadata: dict) -> str:
 
     readme_excerpt = ""
     if has_readme and metadata.get("readme_preview"):
-        readme_excerpt = _clean_readme_text(metadata["readme_preview"])[:MAX_README_EXCERPT_CHARS]
+        readme_excerpt = _build_readme_preview(metadata["readme_preview"], MAX_README_EXCERPT_CHARS)
 
     sections = [
         "===== FACTUAL REPOSITORY INTELLIGENCE (verified by static analysis) =====",
@@ -737,29 +771,6 @@ def build_repository_summary(metadata: dict) -> str:
     if dependency_map:
         sections.append("Dependency map (internal imports):\n" + _format_dependency_map(dependency_map))
 
-    largest_files = code_analysis.get("largest_files", [])
-    if largest_files:
-        lines = [f"- {item['path']} ({item.get('lines', '?')} lines)" for item in largest_files[:8]]
-        sections.append("Largest source files:\n" + "\n".join(lines))
-
-    heavy_import_files = code_analysis.get("files_with_most_imports", [])
-    if heavy_import_files:
-        lines = [
-            f"- {item['path']} ({item.get('import_count', '?')} imports)"
-            for item in heavy_import_files[:8]
-        ]
-        sections.append("Files with most imports:\n" + "\n".join(lines))
-
-    classes = code_analysis.get("classes", [])
-    if classes:
-        lines = [f"- {c['name']} in {c['file']}:{c['line']}" for c in classes[:15]]
-        sections.append("Detected classes:\n" + "\n".join(lines))
-
-    functions = code_analysis.get("functions", [])
-    if functions:
-        lines = [f"- {f['name']} in {f['file']}:{f['line']}" for f in functions[:15]]
-        sections.append("Detected top-level functions:\n" + "\n".join(lines))
-
     if compact_structure:
         sections.append(f"Project structure:\n{compact_structure}")
 
@@ -776,6 +787,10 @@ def build_repository_summary(metadata: dict) -> str:
 
 
 def analyze_repository_complete(github_url: str) -> tuple[dict, str]:
+    cached = get_cached_analysis(github_url)
+    if cached is not None:
+        return cached
+
     temp_dir = tempfile.mkdtemp()
     try:
         Repo.clone_from(github_url, temp_dir, depth=1)
@@ -783,6 +798,7 @@ def analyze_repository_complete(github_url: str) -> tuple[dict, str]:
         metadata = _extract_metadata(repo_path, github_url)
         api_data = {key: metadata[key] for key in API_METADATA_KEYS}
         summary = build_repository_summary(metadata)
+        set_cached_analysis(github_url, api_data, summary)
         return api_data, summary
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)

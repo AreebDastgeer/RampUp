@@ -11,6 +11,7 @@ from pathlib import Path
 from repo_intelligence.entry_points import merge_entry_points
 from repo_intelligence.health import detect_repository_health
 from repo_intelligence.important_files import find_important_files
+from repo_intelligence.frontend_analyzer import analyze_frontend_repository
 from repo_intelligence.js_analyzer import (
     analyze_js_repository,
     detect_node_entry_from_package_json,
@@ -49,6 +50,18 @@ def _merge_dependency_maps(python_edges: list[dict], js_edges: list[dict]) -> li
             continue
         seen.add(key)
         merged.append(edge)
+    return merged
+
+
+def _merge_unique(existing: list[str], additions: list[str]) -> list[str]:
+    merged = list(existing)
+    seen = {item.lower() for item in merged}
+    for item in additions:
+        normalized = item.lower()
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        merged.append(item)
     return merged
 
 
@@ -111,21 +124,27 @@ def analyze_repository_intelligence(
 
     python_result = analyze_python_repository(repo_path)
     js_result = analyze_js_repository(repo_path)
+    frontend_result = analyze_frontend_repository(repo_path)
 
     python_dict = python_analysis_to_dict(python_result)
     js_dict = js_analysis_to_dict(js_result)
 
-    technologies = _technologies_from_imports(
-        existing_tech_stack,
-        python_dict["imports"]["frequent_packages"],
-        js_dict["imports"]["frequent_packages"],
+    technologies = _merge_unique(
+        _technologies_from_imports(
+            existing_tech_stack,
+            python_dict["imports"]["frequent_packages"],
+            js_dict["imports"]["frequent_packages"],
+        ),
+        frontend_result["technologies"],
     )
 
     entry_paths, entry_details = merge_entry_points(
         repo_path,
         filename_entry_points,
         python_dict["detected_entry_points"],
-        js_dict["detected_entry_points"] + detect_node_entry_from_package_json(repo_path),
+        js_dict["detected_entry_points"]
+        + frontend_result["entry_point_details"]
+        + detect_node_entry_from_package_json(repo_path),
         technologies,
     )
 
