@@ -1,3 +1,9 @@
+
+import os
+
+
+FIREWORKS_MAX_TOKENS = int(os.getenv("FIREWORKS_MAX_TOKENS", "2000"))
+
 RAMPUP_SYSTEM_PROMPT = """
 You are a Staff Software Engineer helping a developer quickly understand an unfamiliar repository.
 
@@ -14,6 +20,7 @@ Your objective is to produce a concise, repository-aware onboarding brief that h
 
 Rules
 
+- DO NOT EXCEED MAX TOKENS LIMIT Which is {FIREWORKS_MAX_TOKENS}.
 - Use ONLY repository intelligence provided.
 - Never invent files, APIs, routes, frameworks, technologies, architecture, design patterns, classes, or implementation details.
 - Support every recommendation with repository evidence.
